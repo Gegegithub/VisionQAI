@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détection de Défauts de Câbles</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Logo */
+        .logo {
+            position: fixed;
+            top: 30px;
+            left: 120px;
+            font-size: 2.2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            z-index: 1000;
+            letter-spacing: 2px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 80px;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 30px;
+            border-right: 2px solid #333;
+        }
+
+        .nav-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: #1a1a1a;
+        }
+
+        .nav-icon:hover {
+            background: #2c2c2c;
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .nav-icon.active {
+            background: #3498db;
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(52, 152, 219, 0.8);
+            }
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+        }
+
+        .screen-container {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 1800px;
+            height: 90vh;
+            background: #fff;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 15px solid #2c3e50;
+            padding: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Page */
+        .page {
+            display: none;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Test Page - Horizontal Layout */
+        .test-layout {
+            display: flex;
+            gap: 40px;
+            height: 100%;
+            align-items: center;
+        }
+
+        /* Input Section */
+        .input-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .upload-box {
+            width: 450px;
+            height: 450px;
+            border: 4px dashed #3498db;
+            border-radius: 20px;
+            background: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-box:hover {
+            background: #bdc3c7;
+            border-color: #2980b9;
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.2);
+        }
+
+        .upload-box.has-file {
+            border-color: #27ae60;
+            background: #d4edda;
+            animation: successBounce 0.6s ease;
+        }
+
+        @keyframes successBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .upload-icon {
+            font-size: 5em;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #555;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .upload-preview {
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 15px;
+        }
+
+        .upload-box.has-file .upload-preview {
+            display: block;
+        }
+
+        .upload-box.has-file .upload-icon,
+        .upload-box.has-file .upload-text {
+            display: none;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn-import {
+            width: 450px;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(52, 152, 234, 0.3);
+        }
+
+        .btn-import:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(52, 152, 234, 0.4);
+        }
+
+        .btn-import:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Lancer Section (Middle) */
+        .lancer-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 30px;
+        }
+
+        .btn-lancer {
+            width: 200px;
+            height: 200px;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-lancer::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn-lancer:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-lancer:hover {
+            background: #c0392b;
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 15px 40px rgba(231, 76, 60, 0.6);
+        }
+
+        .btn-lancer:not(:disabled):active {
+            transform: scale(1.05);
+            animation: shockwave 0.6s ease-out;
+        }
+
+        .btn-lancer:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-lancer.ready {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            }
+            50% {
+                box-shadow: 0 10px 40px rgba(231, 76, 60, 0.8), 0 0 60px rgba(231, 76, 60, 0.4);
+            }
+        }
+
+        @keyframes shockwave {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            100% {
+                box-shadow: 0 0 0 100px rgba(231, 76, 60, 0);
+            }
+        }
+
+        .arrow {
+            font-size: 3em;
+            color: #95a5a6;
+            margin: 0 20px;
+        }
+
+        /* Output Section */
+        .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding-top: 50px;
+        }
+
+        .cable-id-badge {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(149, 165, 166, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            z-index: 10;
+            min-width: 200px;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .cable-id-badge.filled {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+            animation: pulseOnce 0.6s ease;
+        }
+
+        .cable-id-badge::before {
+            content: '';
+            font-size: 1.2em;
+        }
+
+        @keyframes pulseOnce {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.1);
+            }
+        }
+
+        .output-display {
+            width: 450px;
+            height: 450px;
+            background: #2c3e50;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .placeholder {
+            color: #95a5a6;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        .output-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .output-image.show {
+            display: block;
+            animation: zoomIn 0.6s ease forwards;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            width: 80%;
+        }
+
+        .loading.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-right: 5px solid #3498db;
+            border-bottom: 5px solid #e74c3c;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #e74c3c, #27ae60);
+            background-size: 200% 100%;
+            animation: progressFlow 2s linear infinite;
+            width: 100%;
+        }
+
+        @keyframes progressFlow {
+            0% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 200% 0%;
+            }
+        }
+
+        .slideshow-controls {
+            display: none;
+            margin-top: 15px;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slideshow-controls.show {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slideshow-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 1em;
+        }
+
+        .slideshow-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .slideshow-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slideshow-info {
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .output-info {
+            width: 450px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #ecf0f1;
+            border-radius: 15px;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .output-info.show {
+            display: block;
+            animation: slideInUp 0.6s ease 0.3s forwards;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 1.1em;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .info-value {
+            color: #34495e;
+        }
+
+        .info-value.defectueux {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        .info-value.non-defectueux {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        /* Dashboard */
+        .dashboard-container {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            overflow-y: auto;
+            background: #ecf0f1;
+            border-radius: 15px;
+        }
+
+        .dashboard-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-top: 5px solid #3498db;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card.success {
+            border-top-color: #27ae60;
+        }
+
+        .stat-card.danger {
+            border-top-color: #e74c3c;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stat-percentage {
+            font-size: 1.2em;
+            color: #95a5a6;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .details-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .details-card h3 {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #ecf0f1;
+        }
+
+        .cable-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .cable-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .cable-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .cable-id-text {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .cable-length {
+            color: #7f8c8d;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 2px solid #fcc;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        .error.show {
+            display: block;
+            animation: errorShake 0.5s ease forwards;
+        }
+
+        @keyframes errorShake {
+            0% {
+                opacity: 0;
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-10px);
+            }
+            50% {
+                transform: translateX(10px);
+            }
+            75% {
+                transform: translateX(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .btn-download-report {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-download-report:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-download-report:active {
+            transform: translateY(0);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.1em;
+            font-weight: 500;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 5px solid #27ae60;
+            color: #27ae60;
+        }
+
+        .toast.error {
+            border-left: 5px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .toast-icon {
+            font-size: 1.5em;
+        }
+
+        /* Floating particles background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) { width: 10px; height: 10px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 15px; height: 15px; left: 30%; animation-delay: 2s; background: rgba(231, 76, 60, 0.3); }
+        .particle:nth-child(3) { width: 8px; height: 8px; left: 50%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 12px; height: 12px; left: 70%; animation-delay: 6s; background: rgba(39, 174, 96, 0.3); }
+        .particle:nth-child(5) { width: 18px; height: 18px; left: 90%; animation-delay: 8s; }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            50% {
+                transform: translateY(-10vh) translateX(50px);
+            }
+        }
+
+        .main-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-card h3 {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Filters */
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .filters-section h3 {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-filter {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-filter.apply {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-filter.apply:hover {
+            background: #2980b9;
+        }
+
+        .btn-filter.reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-filter.reset:hover {
+            background: #7f8c8d;
+        }
+
+        /* History Page */
+        .history-container {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            overflow-y: auto;
+            background: #ecf0f1;
+            border-radius: 15px;
+        }
+
+        .history-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .history-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .history-id {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+
+        .history-date {
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+
+        .history-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .history-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-length {
+            font-size: 1.1em;
+            color: #34495e;
+        }
+
+        .history-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .history-status.ok {
+            background: #d4edda;
+            color: #27ae60;
+        }
+
+        .history-status.defect {
+            background: #f8d7da;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <div class="logo">VisionQAI</div>
+
+    <!-- Floating particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="nav-icon active" data-page="test" title="Test">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+                <path d="M17.7 7.7a7.1 7.1 0 0 0 -11.4 0"></path>
+                <path d="M4 16.3a7.1 7.1 0 0 0 16 0"></path>
+                <path d="M12 8v.01"></path>
+            </svg>
+        </div>
+        <div class="nav-icon" data-page="dashboard" title="Dashboard">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            </svg>
+        </div>
+        <div class="nav-icon" data-page="history" title="Historique">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 8v4l3 3"></path>
+                <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="screen-container">
+            <div class="screen">
+                <!-- Page Test -->
+                <div class="page active" id="testPage">
+                    <div class="test-layout">
+                        <!-- Input Section -->
+                        <div class="input-section">
+                            <div class="upload-box" id="uploadBox">
+                                <div class="upload-icon">+</div>
+                                <div class="upload-text">Cliquez pour<br>importer une ou plusieurs images</div>
+                                <img id="previewImage" class="upload-preview" src="" alt="Preview">
+                                <input type="file" id="fileInput" accept="image/*" multiple>
+                            </div>
+                            <button class="btn-import" id="importBtn" disabled>Importer</button>
+                            <div class="error" id="error"></div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="arrow">→</div>
+
+                        <!-- Lancer Section -->
+                        <div class="lancer-section">
+                            <button class="btn-lancer" id="lancerBtn" disabled>
+                                <span>Lancer</span>
+                            </button>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="arrow">→</div>
+
+                        <!-- Output Section -->
+                        <div class="output-section">
+                            <h2 class="section-title">Output</h2>
+                            <div class="cable-id-badge" id="cableIdBadge">ID: -</div>
+
+                            <div class="output-display">
+                                <div class="placeholder" id="placeholder">En attente d'analyse...</div>
+                                <img id="outputImage" class="output-image" src="" alt="Résultat">
+
+                                <div class="loading" id="loading">
+                                    <div class="spinner"></div>
+                                    <p>Analyse en cours...</p>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="slideshow-controls" id="slideshowControls">
+                                <button class="slideshow-btn" id="prevBtn">◄ Précédent</button>
+                                <span class="slideshow-info" id="slideshowInfo">1 / 1</span>
+                                <button class="slideshow-btn" id="nextBtn">Suivant ►</button>
+                            </div>
+
+                            <div class="output-info" id="outputInfo">
+                                <div class="info-row">
+                                    <span class="info-label">Longueur:</span>
+                                    <span class="info-value" id="longueurValue">XXX cm</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Statut:</span>
+                                    <span class="info-value" id="statutValue">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Dashboard -->
+                <div class="page" id="dashboardPage">
+                    <div class="dashboard-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h1 class="dashboard-title" style="margin: 0;">Dashboard d'Analyse</h1>
+                            <button class="btn-download-report" id="downloadReportBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Télécharger le Rapport
+                            </button>
+                        </div>
+
+                        <!-- Filters Section -->
+                        <div class="filters-section">
+                            <h3>Filtres</h3>
+                            <div class="filters-grid">
+                                <div class="filter-group">
+                                    <label>Longueur Min (cm)</label>
+                                    <input type="number" id="filterMinLength" placeholder="Ex: 20" min="0">
+                                </div>
+                                <div class="filter-group">
+                                    <label>Longueur Max (cm)</label>
+                                    <input type="number" id="filterMaxLength" placeholder="Ex: 100" min="0">
+                                </div>
+                                <div class="filter-group">
+                                    <label>Période</label>
+                                    <select id="filterPeriod">
+                                        <option value="all">Toutes les périodes</option>
+                                        <option value="today">Aujourd'hui</option>
+                                        <option value="week">Cette semaine</option>
+                                        <option value="month">Ce mois</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="btn-filter apply" id="applyFilters">Appliquer</button>
+                                <button class="btn-filter reset" id="resetFilters">Réinitialiser</button>
+                            </div>
+                        </div>
+
+                        <!-- Charts Row -->
+                        <div class="charts-row">
+                            <div class="chart-card">
+                                <h3>Répartition OK / DÉFECTUEUX</h3>
+                                <div class="chart-container">
+                                    <canvas id="pieChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Analyses par Jour</h3>
+                                <div class="chart-container">
+                                    <canvas id="timeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Total de câbles analysés</div>
+                                <div class="stat-value" id="totalCables">0</div>
+                            </div>
+                            <div class="stat-card success">
+                                <div class="stat-label">Câbles Non Défectueux</div>
+                                <div class="stat-value" id="okCables">0</div>
+                                <div class="stat-percentage" id="okPercentage">0%</div>
+                            </div>
+                            <div class="stat-card danger">
+                                <div class="stat-label">Câbles Défectueux</div>
+                                <div class="stat-value" id="defectCables">0</div>
+                                <div class="stat-percentage" id="defectPercentage">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="details-grid">
+                            <div class="details-card">
+                                <h3>Câbles Non Défectueux - Détails</h3>
+                                <div class="cable-list" id="okList">
+                                    <p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>
+                                </div>
+                            </div>
+                            <div class="details-card">
+                                <h3>Câbles Défectueux - Détails</h3>
+                                <div class="cable-list" id="defectList">
+                                    <p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page Historique -->
+                <div class="page" id="historyPage">
+                    <div class="history-container">
+                        <h1 class="history-title">Historique des Analyses</h1>
+                        <div class="history-grid" id="historyGrid">
+                            <p style="text-align: center; color: #95a5a6; padding: 50px;">Aucune analyse effectuée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icon = type === 'success' ? '✓' : '✗';
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <span>${message}</span>
+            `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // Navigation
+        const navIcons = document.querySelectorAll('.nav-icon');
+        const pages = document.querySelectorAll('.page');
+
+        navIcons.forEach(icon => {
+            icon.addEventListener('click', () => {
+                const page = icon.dataset.page;
+
+                navIcons.forEach(i => i.classList.remove('active'));
+                icon.classList.add('active');
+
+                pages.forEach(p => p.classList.remove('active'));
+                document.getElementById(page + 'Page').classList.add('active');
+
+                if (page === 'dashboard') {
+                    loadDashboard();
+                } else if (page === 'history') {
+                    loadHistory();
+                }
+            });
+        });
+
+        // Test page
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const importBtn = document.getElementById('importBtn');
+        const lancerBtn = document.getElementById('lancerBtn');
+        const loading = document.getElementById('loading');
+        const placeholder = document.getElementById('placeholder');
+        const outputImage = document.getElementById('outputImage');
+        const cableIdBadge = document.getElementById('cableIdBadge');
+        const outputInfo = document.getElementById('outputInfo');
+        const error = document.getElementById('error');
+        const slideshowControls = document.getElementById('slideshowControls');
+        const slideshowInfo = document.getElementById('slideshowInfo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let selectedFiles = [];
+        let currentSlideIndex = 0;
+        let analysisResults = [];
+
+        uploadBox.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedFiles = Array.from(e.target.files).filter(file =>
+                    file.type.startsWith('image/')
+                );
+
+                if (selectedFiles.length > 0) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImage.src = e.target.result;
+                        uploadBox.classList.add('has-file');
+                        importBtn.disabled = false;
+
+                        // Update text to show number of images
+                        if (selectedFiles.length > 1) {
+                            importBtn.textContent = `Importer (${selectedFiles.length} images)`;
+                        } else {
+                            importBtn.textContent = 'Importer';
+                        }
+                    };
+                    reader.readAsDataURL(selectedFiles[0]);
+                }
+            }
+        });
+
+        importBtn.addEventListener('click', () => {
+            if (selectedFiles.length > 0) {
+                lancerBtn.disabled = false;
+                lancerBtn.classList.add('ready');
+                showError('');
+
+                // Success toast animation
+                const origText = importBtn.textContent;
+                importBtn.textContent = selectedFiles.length > 1 ? 'Images importées' : 'Image importée';
+                importBtn.style.background = '#27ae60';
+                setTimeout(() => {
+                    importBtn.textContent = origText;
+                    importBtn.style.background = '#3498db';
+                }, 2000);
+            }
+        });
+
+        lancerBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            lancerBtn.classList.remove('ready');
+            loading.classList.add('show');
+            placeholder.style.display = 'none';
+            outputImage.classList.remove('show');
+            outputInfo.classList.remove('show');
+            slideshowControls.classList.remove('show');
+            cableIdBadge.classList.remove('filled');
+            cableIdBadge.textContent = 'ID: -';
+            error.classList.remove('show');
+
+            analysisResults = [];
+            currentSlideIndex = 0;
+
+            // Analyze each file
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        analysisResults.push(data);
+                    } else {
+                        showToast(`Erreur sur ${file.name}: ${data.error}`, 'error');
+                    }
+                } catch (err) {
+                    showToast(`Erreur de connexion pour ${file.name}`, 'error');
+                }
+            }
+
+            loading.classList.remove('show');
+
+            if (analysisResults.length > 0) {
+                displaySlide(0);
+                if (analysisResults.length > 1) {
+                    slideshowControls.classList.add('show');
+                }
+                showToast(`${analysisResults.length} analyse(s) terminée(s)!`, 'success');
+            } else {
+                showError('Aucune analyse n\'a réussi');
+            }
+        });
+
+        function displaySlide(index) {
+            if (index < 0 || index >= analysisResults.length) return;
+
+            currentSlideIndex = index;
+            const data = analysisResults[index];
+
+            // Update slideshow info
+            slideshowInfo.textContent = `${index + 1} / ${analysisResults.length}`;
+
+            // Update navigation buttons
+            prevBtn.disabled = (index === 0);
+            nextBtn.disabled = (index === analysisResults.length - 1);
+
+            // Display with animation
+            outputImage.classList.remove('show');
+            outputInfo.classList.remove('show');
+
+            setTimeout(() => {
+                cableIdBadge.textContent = 'ID: ' + data.id;
+                cableIdBadge.classList.add('filled');
+            }, 100);
+
+            setTimeout(() => {
+                outputImage.src = data.result_image;
+                outputImage.classList.add('show');
+            }, 200);
+
+            setTimeout(() => {
+                document.getElementById('longueurValue').textContent = data.longueur_cm + ' cm';
+
+                const statutElement = document.getElementById('statutValue');
+                statutElement.textContent = data.statut;
+                statutElement.className = data.statut === 'OK' ? 'info-value non-defectueux' : 'info-value defectueux';
+
+                outputInfo.classList.add('show');
+            }, 500);
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlideIndex > 0) {
+                displaySlide(currentSlideIndex - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlideIndex < analysisResults.length - 1) {
+                displaySlide(currentSlideIndex + 1);
+            }
+        });
+
+        function showError(message) {
+            if (message) {
+                error.textContent = message;
+                error.classList.add('show');
+            } else {
+                error.classList.remove('show');
+            }
+        }
+
+        // Animated Counter
+        function animateCounter(element, target, suffix = '') {
+            const duration = 1000;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target + suffix;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current) + suffix;
+                }
+            }, 16);
+        }
+
+        // Global variables for charts
+        let pieChart = null;
+        let timeChart = null;
+        let allAnalyses = [];
+
+        // Dashboard
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/dashboard/stats');
+                const data = await response.json();
+                allAnalyses = [...data.ok, ...data.defectueux];
+
+                animateCounter(document.getElementById('totalCables'), data.total);
+                animateCounter(document.getElementById('okCables'), data.nb_ok);
+                animateCounter(document.getElementById('defectCables'), data.nb_defectueux);
+                animateCounter(document.getElementById('okPercentage'), data.pct_ok, '%');
+                animateCounter(document.getElementById('defectPercentage'), data.pct_defectueux, '%');
+
+                const okList = document.getElementById('okList');
+                if (data.ok.length > 0) {
+                    okList.innerHTML = data.ok.map(cable => `
+                        <div class="cable-item">
+                            <span class="cable-id-text">${cable.id}</span>
+                            <span class="cable-length">${cable.longueur_cm} cm</span>
+                        </div>
+                    `).join('');
+                } else {
+                    okList.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>';
+                }
+
+                const defectList = document.getElementById('defectList');
+                if (data.defectueux.length > 0) {
+                    defectList.innerHTML = data.defectueux.map(cable => `
+                        <div class="cable-item">
+                            <span class="cable-id-text">${cable.id}</span>
+                            <span class="cable-length">${cable.longueur_cm} cm</span>
+                        </div>
+                    `).join('');
+                } else {
+                    defectList.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>';
+                }
+
+                // Create charts
+                createPieChart(data.nb_ok, data.nb_defectueux);
+                createTimeChart(allAnalyses);
+            } catch (err) {
+                console.error('Erreur lors du chargement du dashboard:', err);
+            }
+        }
+
+        // Create Pie Chart
+        function createPieChart(okCount, defectCount) {
+            const ctx = document.getElementById('pieChart');
+
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['OK', 'DÉFECTUEUX'],
+                    datasets: [{
+                        data: [okCount, defectCount],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Time Chart
+        function createTimeChart(analyses) {
+            const ctx = document.getElementById('timeChart');
+
+            if (timeChart) {
+                timeChart.destroy();
+            }
+
+            // Group analyses by date
+            const dateGroups = {};
+            analyses.forEach(analysis => {
+                const date = analysis.id.split('_')[1]; // Extract YYYYMMDD from ID
+                const formattedDate = `${date.substring(6, 8)}/${date.substring(4, 6)}/${date.substring(0, 4)}`;
+
+                if (!dateGroups[formattedDate]) {
+                    dateGroups[formattedDate] = { ok: 0, defect: 0 };
+                }
+
+                if (analysis.statut === 'OK') {
+                    dateGroups[formattedDate].ok++;
+                } else {
+                    dateGroups[formattedDate].defect++;
+                }
+            });
+
+            // Get last 7 days
+            const sortedDates = Object.keys(dateGroups).sort((a, b) => {
+                const [da, ma, ya] = a.split('/');
+                const [db, mb, yb] = b.split('/');
+                return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
+            }).slice(0, 7).reverse();
+
+            const okData = sortedDates.map(date => dateGroups[date].ok);
+            const defectData = sortedDates.map(date => dateGroups[date].defect);
+
+            timeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [
+                        {
+                            label: 'OK',
+                            data: okData,
+                            borderColor: '#27ae60',
+                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'DÉFECTUEUX',
+                            data: defectData,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Filters
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('resetFilters').addEventListener('click', resetFilters);
+
+        function applyFilters() {
+            const minLength = parseFloat(document.getElementById('filterMinLength').value) || 0;
+            const maxLength = parseFloat(document.getElementById('filterMaxLength').value) || Infinity;
+            const period = document.getElementById('filterPeriod').value;
+
+            let filtered = allAnalyses.filter(analysis => {
+                const length = analysis.longueur_cm;
+                return length >= minLength && length <= maxLength;
+            });
+
+            // Apply period filter
+            if (period !== 'all') {
+                const now = new Date();
+                filtered = filtered.filter(analysis => {
+                    const dateStr = analysis.id.split('_')[1]; // YYYYMMDD
+                    const year = parseInt(dateStr.substring(0, 4));
+                    const month = parseInt(dateStr.substring(4, 6)) - 1;
+                    const day = parseInt(dateStr.substring(6, 8));
+                    const analysisDate = new Date(year, month, day);
+
+                    if (period === 'today') {
+                        return analysisDate.toDateString() === now.toDateString();
+                    } else if (period === 'week') {
+                        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        return analysisDate >= weekAgo;
+                    } else if (period === 'month') {
+                        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        return analysisDate >= monthAgo;
+                    }
+                    return true;
+                });
+            }
+
+            // Update stats with filtered data
+            const okFiltered = filtered.filter(a => a.statut === 'OK');
+            const defectFiltered = filtered.filter(a => a.statut === 'DÉFECTUEUX');
+
+            document.getElementById('totalCables').textContent = filtered.length;
+            document.getElementById('okCables').textContent = okFiltered.length;
+            document.getElementById('defectCables').textContent = defectFiltered.length;
+
+            const okPct = filtered.length > 0 ? Math.round((okFiltered.length / filtered.length) * 100) : 0;
+            const defectPct = filtered.length > 0 ? Math.round((defectFiltered.length / filtered.length) * 100) : 0;
+
+            document.getElementById('okPercentage').textContent = okPct + '%';
+            document.getElementById('defectPercentage').textContent = defectPct + '%';
+
+            // Update charts
+            createPieChart(okFiltered.length, defectFiltered.length);
+            createTimeChart(filtered);
+
+            showToast('Filtres appliqués!', 'success');
+        }
+
+        function resetFilters() {
+            document.getElementById('filterMinLength').value = '';
+            document.getElementById('filterMaxLength').value = '';
+            document.getElementById('filterPeriod').value = 'all';
+            loadDashboard();
+            showToast('Filtres réinitialisés', 'success');
+        }
+
+        // Download Report
+        document.getElementById('downloadReportBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/dashboard/stats');
+                const data = await response.json();
+                const allCables = [...data.ok, ...data.defectueux].sort((a, b) => b.id.localeCompare(a.id));
+
+                // Create PDF using jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Title
+                doc.setFontSize(20);
+                doc.setTextColor(44, 62, 80);
+                doc.text('Rapport d\'Analyse', 105, 20, { align: 'center' });
+                doc.setFontSize(16);
+                doc.text('Détection de Défauts de Câbles', 105, 30, { align: 'center' });
+
+                // Line separator
+                doc.setDrawColor(52, 152, 219);
+                doc.setLineWidth(1);
+                doc.line(20, 35, 190, 35);
+
+                // Summary section
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                const now = new Date();
+                doc.text(`Date de génération: ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')}`, 20, 45);
+                doc.text(`Nombre total d'analyses: ${allCables.length}`, 20, 52);
+
+                // Statistics boxes
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Statistiques Globales', 20, 65);
+
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(11);
+
+                // Total box
+                doc.setDrawColor(189, 195, 199);
+                doc.setLineWidth(0.5);
+                doc.rect(20, 70, 50, 20);
+                doc.setFontSize(16);
+                doc.setTextColor(52, 152, 219);
+                doc.text(allCables.length.toString(), 45, 78, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setTextColor(127, 140, 141);
+                doc.text('Total Câbles', 45, 86, { align: 'center' });
+
+                // OK box
+                doc.rect(75, 70, 50, 20);
+                doc.setFontSize(16);
+                doc.setTextColor(39, 174, 96);
+                doc.text(data.ok.length.toString(), 100, 78, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setTextColor(127, 140, 141);
+                doc.text('Câbles OK', 100, 86, { align: 'center' });
+
+                // Defect box
+                doc.rect(130, 70, 50, 20);
+                doc.setFontSize(16);
+                doc.setTextColor(231, 76, 60);
+                doc.text(data.defectueux.length.toString(), 155, 78, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setTextColor(127, 140, 141);
+                doc.text('Câbles Défectueux', 155, 86, { align: 'center' });
+
+                // Details table
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(0, 0, 0);
+                doc.text('Détails des Analyses', 20, 105);
+
+                // Prepare table data
+                const tableData = allCables.map(cable => {
+                    const dateStr = cable.id.split('_')[1];
+                    const timeStr = cable.id.split('_')[2];
+                    const formattedDate = `${dateStr.substring(6, 8)}/${dateStr.substring(4, 6)}/${dateStr.substring(0, 4)}`;
+                    const formattedTime = `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
+
+                    return [
+                        cable.id,
+                        formattedDate,
+                        formattedTime,
+                        cable.longueur_cm.toString() + ' cm',
+                        cable.statut
+                    ];
+                });
+
+                // Add table using autoTable
+                doc.autoTable({
+                    startY: 110,
+                    head: [['ID Câble', 'Date', 'Heure', 'Longueur', 'Statut']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [52, 73, 94],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center'
+                    },
+                    bodyStyles: {
+                        fontSize: 9
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 60 },
+                        1: { cellWidth: 25, halign: 'center' },
+                        2: { cellWidth: 25, halign: 'center' },
+                        3: { cellWidth: 30, halign: 'center' },
+                        4: { cellWidth: 35, halign: 'center' }
+                    },
+                    didParseCell: function(data) {
+                        // Color code status column
+                        if (data.column.index === 4 && data.section === 'body') {
+                            if (data.cell.raw === 'OK') {
+                                data.cell.styles.textColor = [39, 174, 96];
+                                data.cell.styles.fontStyle = 'bold';
+                            } else if (data.cell.raw === 'DÉFECTUEUX') {
+                                data.cell.styles.textColor = [231, 76, 60];
+                                data.cell.styles.fontStyle = 'bold';
+                            }
+                        }
+                    },
+                    margin: { left: 20, right: 20 }
+                });
+
+                // Footer
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(9);
+                    doc.setTextColor(149, 165, 166);
+                    doc.text(
+                        'Rapport généré automatiquement par le Système de Détection de Défauts de Câbles',
+                        105,
+                        doc.internal.pageSize.height - 10,
+                        { align: 'center' }
+                    );
+                    doc.text(
+                        `Page ${i} / ${pageCount}`,
+                        105,
+                        doc.internal.pageSize.height - 5,
+                        { align: 'center' }
+                    );
+                }
+
+                // Save PDF
+                doc.save(`rapport_analyses_${new Date().toISOString().split('T')[0]}.pdf`);
+
+                showToast('Rapport PDF téléchargé avec succès!', 'success');
+            } catch (err) {
+                console.error('Erreur:', err);
+                showToast('Erreur lors de la génération du rapport', 'error');
+            }
+        });
+
+        // History Page
+        async function loadHistory() {
+            try {
+                const response = await fetch('/dashboard/stats');
+                const data = await response.json();
+                const allCables = [...data.ok, ...data.defectueux].sort((a, b) => {
+                    return b.id.localeCompare(a.id); // Sort by ID (newest first)
+                });
+
+                const historyGrid = document.getElementById('historyGrid');
+
+                if (allCables.length === 0) {
+                    historyGrid.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 50px;">Aucune analyse effectuée</p>';
+                    return;
+                }
+
+                historyGrid.innerHTML = allCables.map(cable => {
+                    const dateStr = cable.id.split('_')[1]; // YYYYMMDD
+                    const timeStr = cable.id.split('_')[2]; // HHMMSS
+                    const formattedDate = `${dateStr.substring(6, 8)}/${dateStr.substring(4, 6)}/${dateStr.substring(0, 4)}`;
+                    const formattedTime = `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
+                    const statusClass = cable.statut === 'OK' ? 'ok' : 'defect';
+
+                    return `
+                        <div class="history-card">
+                            <div class="history-card-header">
+                                <span class="history-id">${cable.id}</span>
+                                <span class="history-date">${formattedDate} ${formattedTime}</span>
+                            </div>
+                            <img class="history-image" src="/static/results/${cable.id}_result.jpg" alt="${cable.id}">
+                            <div class="history-info">
+                                <span class="history-length">${cable.longueur_cm} cm</span>
+                                <span class="history-status ${statusClass}">${cable.statut}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Erreur lors du chargement de l\'historique:', err);
+            }
+        }
+    </script>
+</body>
+</html>
