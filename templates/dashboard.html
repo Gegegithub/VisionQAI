@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Analyse de Câbles</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: #2980b9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            font-size: 3rem;
+            margin: 10px 0;
+            color: #3498db;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .stat-card.success h3 {
+            color: #2ecc71;
+        }
+
+        .stat-card.danger h3 {
+            color: #e74c3c;
+        }
+
+        .machines-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .machines-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .machine-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .machine-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .machine-card.decoupe {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .machine-card.enrouleur {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        }
+
+        .machine-card.synchronisation {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+
+        .machine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .machine-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .machine-count {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .machine-bar {
+            height: 10px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .machine-bar-fill {
+            height: 100%;
+            background: white;
+            transition: width 1s ease;
+        }
+
+        .machine-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .machine-details.show {
+            display: block;
+        }
+
+        .cable-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .defect-table {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-decoupe {
+            background: #f5576c;
+            color: white;
+        }
+
+        .badge-enrouleur {
+            background: #19547b;
+            color: white;
+        }
+
+        .badge-synchronisation {
+            background: #a8edea;
+            color: #333;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Retour à l'analyse</a>
+
+        <h1>📊 Dashboard d'Analyse des Câbles</h1>
+
+        <!-- Statistiques principales -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Total des câbles</p>
+                <h3 id="totalCables">0</h3>
+            </div>
+            <div class="stat-card success">
+                <p>Non défectueux</p>
+                <h3 id="cablesOk">0</h3>
+                <p><small id="pctOk">0%</small></p>
+            </div>
+            <div class="stat-card danger">
+                <p>Défectueux</p>
+                <h3 id="cablesDefectueux">0</h3>
+                <p><small id="pctDefectueux">0%</small></p>
+            </div>
+        </div>
+
+        <!-- Section machines responsables -->
+        <div class="machines-section">
+            <h2>🔧 Machines Responsables des Défauts</h2>
+            <p style="color: #666; margin-bottom: 20px;">Détection automatique basée sur l'analyse des longueurs</p>
+            <div id="machinesContainer">
+                <div class="no-data">Aucune donnée disponible</div>
+            </div>
+        </div>
+
+        <!-- Graphique circulaire -->
+        <div class="chart-container">
+            <h2>📈 Répartition des câbles</h2>
+            <canvas id="pieChart" style="max-width: 400px; margin: 0 auto;"></canvas>
+        </div>
+
+        <!-- Tableau des câbles défectueux -->
+        <div class="defect-table">
+            <h2>📋 Détails des câbles défectueux</h2>
+            <table id="defectTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Longueur (cm)</th>
+                        <th>Machine responsable</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="defectTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999;">Aucun câble défectueux</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let pieChart = null;
+
+        // Charger les statistiques
+        async function loadStats() {
+            try {
+                const response = await fetch('/dashboard/stats');
+                const data = await response.json();
+
+                // Mettre à jour les stats principales
+                document.getElementById('totalCables').textContent = data.total;
+                document.getElementById('cablesOk').textContent = data.nb_ok;
+                document.getElementById('cablesDefectueux').textContent = data.nb_defectueux;
+                document.getElementById('pctOk').textContent = data.pct_ok + '%';
+                document.getElementById('pctDefectueux').textContent = data.pct_defectueux + '%';
+
+                // Afficher les machines
+                displayMachines(data.machines);
+
+                // Mettre à jour le graphique
+                updatePieChart(data.nb_ok, data.nb_defectueux);
+
+                // Afficher le tableau
+                displayDefectTable(data.defectueux);
+
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Afficher les machines responsables
+        function displayMachines(machines) {
+            const container = document.getElementById('machinesContainer');
+
+            if (!machines || machines.length === 0) {
+                container.innerHTML = '<div class="no-data">✅ Aucun défaut détecté - Toutes les machines fonctionnent correctement!</div>';
+                return;
+            }
+
+            let html = '';
+            machines.forEach(machine => {
+                const machineClass = machine.machine.toLowerCase().includes('découpe') ? 'decoupe' :
+                                    machine.machine.toLowerCase().includes('enrouleur') ? 'enrouleur' : 'synchronisation';
+
+                const badgeClass = machineClass === 'decoupe' ? 'badge-decoupe' :
+                                   machineClass === 'enrouleur' ? 'badge-enrouleur' : 'badge-synchronisation';
+
+                html += `
+                    <div class="machine-card ${machineClass}" onclick="toggleDetails(this)">
+                        <div class="machine-header">
+                            <div class="machine-name">${machine.machine}</div>
+                            <div class="machine-count">${machine.count}</div>
+                        </div>
+                        <div class="machine-bar">
+                            <div class="machine-bar-fill" style="width: ${machine.percentage}%"></div>
+                        </div>
+                        <p>${machine.percentage}% des défauts</p>
+                        <div class="machine-details">
+                            <strong>Câbles affectés:</strong><br>
+                            ${machine.cables.map(c => `<span class="cable-tag">${c.id} (${c.longueur_cm}cm)</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Toggle détails machine
+        function toggleDetails(element) {
+            const details = element.querySelector('.machine-details');
+            details.classList.toggle('show');
+        }
+
+        // Mettre à jour le graphique circulaire
+        function updatePieChart(ok, defectueux) {
+            const ctx = document.getElementById('pieChart');
+
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Non défectueux', 'Défectueux'],
+                    datasets: [{
+                        data: [ok, defectueux],
+                        backgroundColor: ['#2ecc71', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Afficher le tableau des défauts
+        function displayDefectTable(defectueux) {
+            const tbody = document.getElementById('defectTableBody');
+
+            if (!defectueux || defectueux.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Aucun câble défectueux</td></tr>';
+                return;
+            }
+
+            let html = '';
+            defectueux.forEach(cable => {
+                const machine = cable.machine_responsable || 'Inconnue';
+                const badgeClass = machine.toLowerCase().includes('découpe') ? 'badge-decoupe' :
+                                   machine.toLowerCase().includes('enrouleur') ? 'badge-enrouleur' : 'badge-synchronisation';
+
+                const date = new Date(cable.timestamp).toLocaleDateString('fr-FR');
+
+                html += `
+                    <tr>
+                        <td><strong>${cable.id}</strong></td>
+                        <td>${cable.longueur_cm} cm</td>
+                        <td><span class="badge ${badgeClass}">${machine}</span></td>
+                        <td>${date}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Charger au démarrage
+        loadStats();
+
+        // Rafraîchir toutes les 30 secondes
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

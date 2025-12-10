@@ -1079,6 +1079,72 @@
             background: #f8d7da;
             color: #e74c3c;
         }
+
+        /* Modal pour agrandir les images */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .image-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            animation: zoomIn 0.3s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            color: white;
+            font-size: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10001;
+        }
+
+        .modal-close:hover {
+            color: #e74c3c;
+            transform: scale(1.2);
+        }
+
+        .modal-info {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            border-radius: 10px;
+            color: #2c3e50;
+            font-size: 1.2em;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1194,14 +1260,23 @@
                     <div class="dashboard-container">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h1 class="dashboard-title" style="margin: 0;">Dashboard d'Analyse</h1>
-                            <button class="btn-download-report" id="downloadReportBtn">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Télécharger le Rapport
-                            </button>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="/dashboard" style="display: inline-flex; align-items: center; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: all 0.3s; box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M12 1v6m0 6v6m8.66-10l-5.2 3M8.54 14l-5.2 3m12.32 0l-5.2-3M8.54 10l-5.2-3"></path>
+                                    </svg>
+                                    🔧 Analyse des Machines
+                                </a>
+                                <button class="btn-download-report" id="downloadReportBtn">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Télécharger le Rapport
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Filters Section -->
@@ -1285,7 +1360,16 @@
                 <!-- Page Historique -->
                 <div class="page" id="historyPage">
                     <div class="history-container">
-                        <h1 class="history-title">Historique des Analyses</h1>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <h1 class="history-title" style="margin: 0;">Historique des Analyses</h1>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="statusFilter" style="padding: 12px 20px; border: 2px solid #3498db; border-radius: 8px; font-size: 16px; background: white; cursor: pointer; transition: all 0.3s;">
+                                    <option value="all">Tous les câbles</option>
+                                    <option value="OK">Non défectueux uniquement</option>
+                                    <option value="DÉFECTUEUX">Défectueux uniquement</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="history-grid" id="historyGrid">
                             <p style="text-align: center; color: #95a5a6; padding: 50px;">Aucune analyse effectuée</p>
                         </div>
@@ -1936,46 +2020,110 @@
         });
 
         // History Page
-        async function loadHistory() {
+        let allCablesData = []; // Stocker toutes les données
+
+        async function loadHistory(filterStatus = 'all') {
             try {
                 const response = await fetch('/dashboard/stats');
                 const data = await response.json();
-                const allCables = [...data.ok, ...data.defectueux].sort((a, b) => {
+                allCablesData = [...data.ok, ...data.defectueux].sort((a, b) => {
                     return b.id.localeCompare(a.id); // Sort by ID (newest first)
                 });
 
-                const historyGrid = document.getElementById('historyGrid');
-
-                if (allCables.length === 0) {
-                    historyGrid.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 50px;">Aucune analyse effectuée</p>';
-                    return;
-                }
-
-                historyGrid.innerHTML = allCables.map(cable => {
-                    const dateStr = cable.id.split('_')[1]; // YYYYMMDD
-                    const timeStr = cable.id.split('_')[2]; // HHMMSS
-                    const formattedDate = `${dateStr.substring(6, 8)}/${dateStr.substring(4, 6)}/${dateStr.substring(0, 4)}`;
-                    const formattedTime = `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)}:${timeStr.substring(4, 6)}`;
-                    const statusClass = cable.statut === 'OK' ? 'ok' : 'defect';
-
-                    return `
-                        <div class="history-card">
-                            <div class="history-card-header">
-                                <span class="history-id">${cable.id}</span>
-                                <span class="history-date">${formattedDate} ${formattedTime}</span>
-                            </div>
-                            <img class="history-image" src="/static/results/${cable.id}_result.jpg" alt="${cable.id}">
-                            <div class="history-info">
-                                <span class="history-length">${cable.longueur_cm} cm</span>
-                                <span class="history-status ${statusClass}">${cable.statut}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                displayFilteredHistory(filterStatus);
             } catch (err) {
                 console.error('Erreur lors du chargement de l\'historique:', err);
             }
         }
+
+        function displayFilteredHistory(filterStatus) {
+            const historyGrid = document.getElementById('historyGrid');
+
+            // Filtrer les câbles selon le statut sélectionné
+            let filteredCables = allCablesData;
+            if (filterStatus !== 'all') {
+                filteredCables = allCablesData.filter(cable => cable.statut === filterStatus);
+            }
+
+            if (filteredCables.length === 0) {
+                const message = filterStatus === 'all'
+                    ? 'Aucune analyse effectuée'
+                    : `Aucun câble ${filterStatus === 'OK' ? 'non défectueux' : 'défectueux'} trouvé`;
+                historyGrid.innerHTML = `<p style="text-align: center; color: #95a5a6; padding: 50px;">${message}</p>`;
+                return;
+            }
+
+            historyGrid.innerHTML = filteredCables.map(cable => {
+                const date = new Date(cable.timestamp);
+                const formattedDate = date.toLocaleDateString('fr-FR');
+                const formattedTime = date.toLocaleTimeString('fr-FR');
+                const statusClass = cable.statut === 'OK' ? 'ok' : 'defect';
+                const cableInfoJson = JSON.stringify(cable).replace(/"/g, '&quot;');
+
+                return `
+                    <div class="history-card">
+                        <div class="history-card-header">
+                            <span class="history-id">${cable.id}</span>
+                            <span class="history-date">${formattedDate} ${formattedTime}</span>
+                        </div>
+                        <img class="history-image"
+                             src="/static/${cable.result_image}"
+                             alt="${cable.id}"
+                             onerror="this.src='/static/placeholder.png'; this.style.opacity='0.3';"
+                             onclick="event.stopPropagation(); openImageModal('/static/${cable.result_image}', ${cableInfoJson});"
+                             style="cursor: zoom-in;">
+                        <div class="history-info">
+                            <span class="history-length">${cable.longueur_cm} cm</span>
+                            <span class="history-status ${statusClass}">${cable.statut}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Écouter les changements du filtre
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    displayFilteredHistory(this.value);
+                });
+            }
+        });
+
+        // Modal pour agrandir les images
+        function openImageModal(imageSrc, cableInfo) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const modalInfoText = document.getElementById('modalInfo');
+
+            modal.classList.add('show');
+            modalImg.src = imageSrc;
+            modalInfoText.innerHTML = `
+                <strong>ID:</strong> ${cableInfo.id} |
+                <strong>Longueur:</strong> ${cableInfo.longueur_cm} cm |
+                <strong>Statut:</strong> ${cableInfo.statut}
+            `;
+
+            // Fermer avec Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeImageModal();
+                }
+            });
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+        }
     </script>
+
+    <!-- Modal pour agrandir les images -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="modalImage" class="modal-content" onclick="event.stopPropagation()">
+        <div id="modalInfo" class="modal-info" onclick="event.stopPropagation()"></div>
+    </div>
 </body>
 </html>

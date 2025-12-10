@@ -58,24 +58,43 @@ class CableAnalyzer:
         # Effectuer la prédiction avec YOLO
         results = self.model(image_path)
 
+        # Debug: Afficher les informations sur la détection
+        print(f"[DEBUG] Nombre de résultats: {len(results)}")
+        print(f"[DEBUG] Masques disponibles: {results[0].masks}")
+        if results[0].masks is not None:
+            print(f"[DEBUG] Nombre de masques: {len(results[0].masks.data)}")
+
         # Vérifier s'il y a des masques détectés
         if results[0].masks is None or len(results[0].masks.data) == 0:
-            raise ValueError("Aucun câble détecté dans l'image")
+            raise ValueError("Aucun câble détecté dans l'image. Le modèle a détecté des objets mais sans masques de segmentation. Assurez-vous d'utiliser un modèle YOLOv8-seg (segmentation).")
 
         # Récupérer le premier masque (câble principal)
+        print("[DEBUG] Récupération du masque...")
         mask = results[0].masks.data[0].cpu().numpy()
+        print(f"[DEBUG] Forme du masque: {mask.shape}")
         mask = (mask > 0.5).astype(np.uint8) * 255
 
         # Convertir en format booléen pour le traitement
         mask_bool = mask > 0
+        print(f"[DEBUG] Pixels positifs dans le masque: {np.sum(mask_bool)}")
 
         # Pipeline de traitement
+        print("[DEBUG] Prétraitement du masque...")
         mask_clean = preprocess_mask(mask_bool)
+        print(f"[DEBUG] Pixels après nettoyage: {np.sum(mask_clean)}")
+
+        print("[DEBUG] Squelettisation...")
         skeleton = skeletonize_mask(mask_clean)
+        print(f"[DEBUG] Pixels dans le squelette: {np.sum(skeleton)}")
 
         # Calculer la longueur
+        print("[DEBUG] Construction du graphe...")
         G, coords = skeleton_graph(skeleton)
+        print(f"[DEBUG] Nombre de nœuds dans le graphe: {G.number_of_nodes()}")
+
+        print("[DEBUG] Calcul de la longueur...")
         longueur_pixels = longest_path_length(G)
+        print(f"[DEBUG] Longueur en pixels: {longueur_pixels}")
         longueur_cm = pixels_to_cm(
             longueur_pixels,
             self.longueur_objet_reel_cm,
@@ -83,19 +102,31 @@ class CableAnalyzer:
         )
 
         # Déterminer le statut
+        print(f"[DEBUG] Détermination du statut... longueur_cm={longueur_cm}")
         if self.longueur_min_ok <= longueur_cm <= self.longueur_max_ok:
             statut = "OK"
         else:
             statut = "DÉFECTUEUX"
+        print(f"[DEBUG] Statut: {statut}")
 
         # Créer la visualisation
-        visualization = create_visualization(
-            original_img,
-            mask_clean,
-            skeleton,
-            longueur_cm,
-            statut
-        )
+        print("[DEBUG] Création de la visualisation...")
+        print(f"[DEBUG] Forme image originale: {original_img.shape}")
+        print(f"[DEBUG] Forme mask_clean: {mask_clean.shape}")
+        print(f"[DEBUG] Forme skeleton: {skeleton.shape}")
+
+        try:
+            visualization = create_visualization(
+                original_img,
+                mask_clean,
+                skeleton,
+                longueur_cm,
+                statut
+            )
+            print("[DEBUG] Visualisation créée avec succès")
+        except Exception as e:
+            print(f"[ERROR] Erreur lors de la création de la visualisation: {e}")
+            raise
 
         return {
             'longueur_pixels': longueur_pixels,

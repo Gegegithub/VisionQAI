@@ -1,0 +1,24 @@
+{
+  "analyses": [
+    {
+      "id": "CABLE_20251210_104502_1",
+      "filename": "IMG_1132_1.JPG",
+      "longueur_pixels": 602.78,
+      "longueur_cm": 30.14,
+      "statut": "OK",
+      "machine_responsable": "Aucune",
+      "timestamp": "2025-12-10T10:45:02.093045",
+      "result_image": "results/result_IMG_1132_1.JPG"
+    },
+    {
+      "id": "CABLE_20251210_104659_2",
+      "filename": "IMG_0882.JPG",
+      "longueur_pixels": 918.29,
+      "longueur_cm": 45.91,
+      "statut": "DÉFECTUEUX",
+      "machine_responsable": "Synchronisation Extrudeuse / Découpe",
+      "timestamp": "2025-12-10T10:46:59.375391",
+      "result_image": "results/result_IMG_0882.JPG"
+    }
+  ]
+}

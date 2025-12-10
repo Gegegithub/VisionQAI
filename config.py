@@ -18,8 +18,8 @@ LONGUEUR_OBJET_REEL_CM = 10  # Longueur réelle de l'objet de référence en cm
 LONGUEUR_OBJET_PIXELS = 200  # Longueur de l'objet de référence en pixels
 
 # Critères de qualité
-LONGUEUR_MIN_OK = 22  # cm
-LONGUEUR_MAX_OK = 60  # cm
+LONGUEUR_MIN_OK = 20  # cm
+LONGUEUR_MAX_OK = 40  # cm
 
 # Extensions de fichiers autorisées
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
