@@ -1,6 +1,6 @@
 # Détection de Défauts de Câbles
 
-Application web de détection automatique de défauts dans les câbles électriques utilisant YOLOv8 et Flask.
+Application web de détection automatique de défauts de longueur des câbles électriques en utilisant YOLOv8 et Flask.
 
 ## Description
 
