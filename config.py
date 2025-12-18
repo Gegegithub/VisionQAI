@@ -25,5 +25,5 @@ LONGUEUR_MAX_OK = 40  # cm
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 # Configuration Flask
-SECRET_KEY = 'votre-clé-secrète-ici'
+SECRET_KEY = ''
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max

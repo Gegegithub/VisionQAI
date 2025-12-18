@@ -49,39 +49,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in config.ALLOWED_EXTENSIONS
 
 
-def detect_responsible_machine(longueur_cm):
-    """
-    Détecte la machine probablement responsable du défaut basé sur la longueur du câble
-
-    Logique de détection basée sur l'analyse des patterns de défauts :
-    - Machine de découpe : Câble vraiment trop court (< LONGUEUR_MIN_OK - 5)
-    - Enrouleur / Bobineuse : Câble légèrement hors norme (±5cm des limites)
-    - Synchronisation Extrudeuse / Découpe : Câble beaucoup trop long (> LONGUEUR_MAX_OK + 5)
-    - Aucune : Câble dans les normes
-
-    Args:
-        longueur_cm: Longueur du câble en centimètres
-
-    Returns:
-        str: Nom de la machine responsable
-    """
-    if longueur_cm < config.LONGUEUR_MIN_OK:
-        # Câble trop court
-        if longueur_cm < config.LONGUEUR_MIN_OK - 5:
-            return "Machine de découpe"
-        else:
-            return "Enrouleur / Bobineuse"
-
-    elif longueur_cm > config.LONGUEUR_MAX_OK:
-        # Câble trop long
-        if longueur_cm > config.LONGUEUR_MAX_OK + 5:
-            return "Synchronisation Extrudeuse / Découpe"
-        else:
-            return "Enrouleur / Bobineuse"
-
-    else:
-        # Câble OK
-        return "Aucune"
 
 
 @app.route('/')
@@ -139,9 +106,6 @@ def upload_file():
         # Générer un ID unique
         cable_id = f"CABLE_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{len(data['analyses']) + 1}"
 
-        # Déterminer la machine responsable en cas de défaut
-        machine_responsable = detect_responsible_machine(results['longueur_cm'])
-
         # Ajouter cette analyse aux données
         analysis_record = {
             'id': cable_id,
@@ -149,7 +113,6 @@ def upload_file():
             'longueur_pixels': round(results['longueur_pixels'], 2),
             'longueur_cm': round(results['longueur_cm'], 2),
             'statut': results['statut'],
-            'machine_responsable': machine_responsable,
             'timestamp': datetime.now().isoformat(),
             'result_image': f'results/{result_filename}'
         }
@@ -193,46 +156,14 @@ def dashboard_stats():
     pct_defectueux = (nb_defectueux / total * 100) if total > 0 else 0
     pct_ok = (nb_ok / total * 100) if total > 0 else 0
 
-    # Analyser les machines responsables
-    machines_stats = {}
-    for cable in defectueux:
-        machine = cable.get('machine_responsable', 'Inconnue')
-        if machine not in machines_stats:
-            machines_stats[machine] = {
-                'count': 0,
-                'cables': []
-            }
-        machines_stats[machine]['count'] += 1
-        machines_stats[machine]['cables'].append({
-            'id': cable['id'],
-            'longueur_cm': cable['longueur_cm'],
-            'timestamp': cable['timestamp']
-        })
-
-    # Calculer les pourcentages par machine
-    machines_data = []
-    for machine, stats in machines_stats.items():
-        if machine != 'Aucune':
-            pct = (stats['count'] / nb_defectueux * 100) if nb_defectueux > 0 else 0
-            machines_data.append({
-                'machine': machine,
-                'count': stats['count'],
-                'percentage': round(pct, 1),
-                'cables': stats['cables']
-            })
-
-    # Trier par nombre de défauts (machine la plus problématique en premier)
-    machines_data.sort(key=lambda x: x['count'], reverse=True)
-
     return jsonify({
         'total': total,
         'nb_defectueux': nb_defectueux,
         'nb_ok': nb_ok,
         'pct_defectueux': round(pct_defectueux, 1),
         'pct_ok': round(pct_ok, 1),
-        'defectueux': [{'id': a['id'], 'longueur_cm': a['longueur_cm'], 'timestamp': a['timestamp'], 'machine_responsable': a.get('machine_responsable', 'Inconnue'), 'statut': a['statut'], 'result_image': a.get('result_image', '')} for a in defectueux],
-        'ok': [{'id': a['id'], 'longueur_cm': a['longueur_cm'], 'timestamp': a['timestamp'], 'statut': a['statut'], 'result_image': a.get('result_image', '')} for a in ok],
-        'machines': machines_data
+        'defectueux': [{'id': a['id'], 'longueur_cm': a['longueur_cm'], 'timestamp': a['timestamp'], 'statut': a['statut'], 'result_image': a.get('result_image', '')} for a in defectueux],
+        'ok': [{'id': a['id'], 'longueur_cm': a['longueur_cm'], 'timestamp': a['timestamp'], 'statut': a['statut'], 'result_image': a.get('result_image', '')} for a in ok]
     })
 
 

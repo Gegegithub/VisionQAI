@@ -83,99 +83,6 @@
             color: #e74c3c;
         }
 
-        .machines-section {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .machines-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-
-        .machine-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .machine-card:hover {
-            transform: translateX(10px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-
-        .machine-card.decoupe {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .machine-card.enrouleur {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-        }
-
-        .machine-card.synchronisation {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            color: #333;
-        }
-
-        .machine-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .machine-name {
-            font-size: 1.4rem;
-            font-weight: bold;
-        }
-
-        .machine-count {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .machine-bar {
-            height: 10px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .machine-bar-fill {
-            height: 100%;
-            background: white;
-            transition: width 1s ease;
-        }
-
-        .machine-details {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .machine-details.show {
-            display: block;
-        }
-
-        .cable-tag {
-            display: inline-block;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin: 5px;
-            font-size: 0.9rem;
-        }
-
         .chart-container {
             background: white;
             padding: 30px;
@@ -212,29 +119,6 @@
             background: #f5f5f5;
         }
 
-        .badge {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .badge-decoupe {
-            background: #f5576c;
-            color: white;
-        }
-
-        .badge-enrouleur {
-            background: #19547b;
-            color: white;
-        }
-
-        .badge-synchronisation {
-            background: #a8edea;
-            color: #333;
-        }
-
         .no-data {
             text-align: center;
             padding: 50px;
@@ -267,15 +151,6 @@
             </div>
         </div>
 
-        <!-- Section machines responsables -->
-        <div class="machines-section">
-            <h2>🔧 Machines Responsables des Défauts</h2>
-            <p style="color: #666; margin-bottom: 20px;">Détection automatique basée sur l'analyse des longueurs</p>
-            <div id="machinesContainer">
-                <div class="no-data">Aucune donnée disponible</div>
-            </div>
-        </div>
-
         <!-- Graphique circulaire -->
         <div class="chart-container">
             <h2>📈 Répartition des câbles</h2>
@@ -290,13 +165,12 @@
                     <tr>
                         <th>ID</th>
                         <th>Longueur (cm)</th>
-                        <th>Machine responsable</th>
                         <th>Date</th>
                     </tr>
                 </thead>
                 <tbody id="defectTableBody">
                     <tr>
-                        <td colspan="4" style="text-align: center; color: #999;">Aucun câble défectueux</td>
+                        <td colspan="3" style="text-align: center; color: #999;">Aucun câble défectueux</td>
                     </tr>
                 </tbody>
             </table>
@@ -319,9 +193,6 @@
                 document.getElementById('pctOk').textContent = data.pct_ok + '%';
                 document.getElementById('pctDefectueux').textContent = data.pct_defectueux + '%';
 
-                // Afficher les machines
-                displayMachines(data.machines);
-
                 // Mettre à jour le graphique
                 updatePieChart(data.nb_ok, data.nb_defectueux);
 
@@ -331,50 +202,6 @@
             } catch (error) {
                 console.error('Erreur:', error);
             }
-        }
-
-        // Afficher les machines responsables
-        function displayMachines(machines) {
-            const container = document.getElementById('machinesContainer');
-
-            if (!machines || machines.length === 0) {
-                container.innerHTML = '<div class="no-data">✅ Aucun défaut détecté - Toutes les machines fonctionnent correctement!</div>';
-                return;
-            }
-
-            let html = '';
-            machines.forEach(machine => {
-                const machineClass = machine.machine.toLowerCase().includes('découpe') ? 'decoupe' :
-                                    machine.machine.toLowerCase().includes('enrouleur') ? 'enrouleur' : 'synchronisation';
-
-                const badgeClass = machineClass === 'decoupe' ? 'badge-decoupe' :
-                                   machineClass === 'enrouleur' ? 'badge-enrouleur' : 'badge-synchronisation';
-
-                html += `
-                    <div class="machine-card ${machineClass}" onclick="toggleDetails(this)">
-                        <div class="machine-header">
-                            <div class="machine-name">${machine.machine}</div>
-                            <div class="machine-count">${machine.count}</div>
-                        </div>
-                        <div class="machine-bar">
-                            <div class="machine-bar-fill" style="width: ${machine.percentage}%"></div>
-                        </div>
-                        <p>${machine.percentage}% des défauts</p>
-                        <div class="machine-details">
-                            <strong>Câbles affectés:</strong><br>
-                            ${machine.cables.map(c => `<span class="cable-tag">${c.id} (${c.longueur_cm}cm)</span>`).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        // Toggle détails machine
-        function toggleDetails(element) {
-            const details = element.querySelector('.machine-details');
-            details.classList.toggle('show');
         }
 
         // Mettre à jour le graphique circulaire
@@ -412,23 +239,18 @@
             const tbody = document.getElementById('defectTableBody');
 
             if (!defectueux || defectueux.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Aucun câble défectueux</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">Aucun câble défectueux</td></tr>';
                 return;
             }
 
             let html = '';
             defectueux.forEach(cable => {
-                const machine = cable.machine_responsable || 'Inconnue';
-                const badgeClass = machine.toLowerCase().includes('découpe') ? 'badge-decoupe' :
-                                   machine.toLowerCase().includes('enrouleur') ? 'badge-enrouleur' : 'badge-synchronisation';
-
                 const date = new Date(cable.timestamp).toLocaleDateString('fr-FR');
 
                 html += `
                     <tr>
                         <td><strong>${cable.id}</strong></td>
                         <td>${cable.longueur_cm} cm</td>
-                        <td><span class="badge ${badgeClass}">${machine}</span></td>
                         <td>${date}</td>
                     </tr>
                 `;

@@ -1,24 +1,76 @@
 {
   "analyses": [
     {
-      "id": "CABLE_20251210_104502_1",
-      "filename": "IMG_1132_1.JPG",
-      "longueur_pixels": 602.78,
-      "longueur_cm": 30.14,
-      "statut": "OK",
-      "machine_responsable": "Aucune",
-      "timestamp": "2025-12-10T10:45:02.093045",
-      "result_image": "results/result_IMG_1132_1.JPG"
-    },
-    {
-      "id": "CABLE_20251210_104659_2",
+      "id": "CABLE_20251210_173438_1",
       "filename": "IMG_0882.JPG",
       "longueur_pixels": 918.29,
       "longueur_cm": 45.91,
       "statut": "DÉFECTUEUX",
-      "machine_responsable": "Synchronisation Extrudeuse / Découpe",
-      "timestamp": "2025-12-10T10:46:59.375391",
+      "timestamp": "2025-12-10T17:34:38.497134",
       "result_image": "results/result_IMG_0882.JPG"
+    },
+    {
+      "id": "CABLE_20251210_173941_2",
+      "filename": "IMG_1132_1.JPG",
+      "longueur_pixels": 602.78,
+      "longueur_cm": 30.14,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:39:41.956048",
+      "result_image": "results/result_IMG_1132_1.JPG"
+    },
+    {
+      "id": "CABLE_20251210_174427_3",
+      "filename": "IMG_1132_1.JPG",
+      "longueur_pixels": 602.78,
+      "longueur_cm": 30.14,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:44:27.852710",
+      "result_image": "results/result_IMG_1132_1.JPG"
+    },
+    {
+      "id": "CABLE_20251210_174451_4",
+      "filename": "IMG_1131.jpg",
+      "longueur_pixels": 574.12,
+      "longueur_cm": 28.71,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:44:51.737664",
+      "result_image": "results/result_IMG_1131.jpg"
+    },
+    {
+      "id": "CABLE_20251210_174857_5",
+      "filename": "photo-1761661811597_jpg.rf.1466baa54d93bc5a10dfea0f21591565.jpg",
+      "longueur_pixels": 474.89,
+      "longueur_cm": 23.74,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:48:57.443716",
+      "result_image": "results/result_photo-1761661811597_jpg.rf.1466baa54d93bc5a10dfea0f21591565.jpg"
+    },
+    {
+      "id": "CABLE_20251210_174953_6",
+      "filename": "photo-1761661592850_jpg.rf.cb87486ae5de74fa0a951a4152a9fe1c.jpg",
+      "longueur_pixels": 700.04,
+      "longueur_cm": 35.0,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:49:53.318535",
+      "result_image": "results/result_photo-1761661592850_jpg.rf.cb87486ae5de74fa0a951a4152a9fe1c.jpg"
+    },
+    {
+      "id": "CABLE_20251210_175036_7",
+      "filename": "photo-1761661816672_jpg.rf.48467f3eba72ff322235db54f56eff22.jpg",
+      "longueur_pixels": 526.92,
+      "longueur_cm": 26.35,
+      "statut": "OK",
+      "timestamp": "2025-12-10T17:50:36.729438",
+      "result_image": "results/result_photo-1761661816672_jpg.rf.48467f3eba72ff322235db54f56eff22.jpg"
+    },
+    {
+      "id": "CABLE_20251210_175102_8",
+      "filename": "photo-1761661633607_jpg.rf.836ba5444ac96fc37424343fd3a08021.jpg",
+      "longueur_pixels": 1169.13,
+      "longueur_cm": 58.46,
+      "statut": "DÉFECTUEUX",
+      "timestamp": "2025-12-10T17:51:02.215461",
+      "result_image": "results/result_photo-1761661633607_jpg.rf.836ba5444ac96fc37424343fd3a08021.jpg"
     }
   ]
 }

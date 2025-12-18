@@ -681,52 +681,6 @@
             color: #95a5a6;
         }
 
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-
-        .details-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .details-card h3 {
-            font-size: 1.5em;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #ecf0f1;
-        }
-
-        .cable-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .cable-item {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s ease;
-        }
-
-        .cable-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-        }
-
-        .cable-id-text {
-            font-weight: bold;
-            color: #2c3e50;
-        }
 
         .cable-length {
             color: #7f8c8d;
@@ -1004,70 +958,62 @@
             text-align: center;
         }
 
-        .history-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-        }
-
-        .history-card {
+        .history-table {
             background: white;
             border-radius: 15px;
-            padding: 20px;
+            overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
         }
 
-        .history-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .history-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ecf0f1;
+        .history-table th {
+            background: #3498db;
+            color: white;
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+
+        .history-table td {
+            padding: 18px;
+            border-bottom: 1px solid #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
         }
 
         .history-id {
             font-weight: bold;
             color: #2c3e50;
-            font-size: 0.9em;
         }
 
         .history-date {
-            font-size: 0.85em;
             color: #7f8c8d;
-        }
-
-        .history-image {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
-        .history-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            font-size: 0.95em;
         }
 
         .history-length {
-            font-size: 1.1em;
             color: #34495e;
+            font-weight: 500;
         }
 
         .history-status {
-            padding: 5px 15px;
+            padding: 6px 16px;
             border-radius: 20px;
             font-weight: bold;
             font-size: 0.9em;
+            display: inline-block;
         }
 
         .history-status.ok {
@@ -1078,6 +1024,33 @@
         .history-status.defect {
             background: #f8d7da;
             color: #e74c3c;
+        }
+
+        .btn-view-photo {
+            padding: 8px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .btn-view-photo:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .no-data-history {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+            font-size: 1.2em;
+            background: white;
+            border-radius: 15px;
         }
 
         /* Modal pour agrandir les images */
@@ -1260,23 +1233,14 @@
                     <div class="dashboard-container">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h1 class="dashboard-title" style="margin: 0;">Dashboard d'Analyse</h1>
-                            <div style="display: flex; gap: 10px;">
-                                <a href="/dashboard" style="display: inline-flex; align-items: center; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: all 0.3s; box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                        <path d="M12 1v6m0 6v6m8.66-10l-5.2 3M8.54 14l-5.2 3m12.32 0l-5.2-3M8.54 10l-5.2-3"></path>
-                                    </svg>
-                                    🔧 Analyse des Machines
-                                </a>
-                                <button class="btn-download-report" id="downloadReportBtn">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Télécharger le Rapport
-                                </button>
-                            </div>
+                            <button class="btn-download-report" id="downloadReportBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Télécharger le Rapport
+                            </button>
                         </div>
 
                         <!-- Filters Section -->
@@ -1316,9 +1280,9 @@
                                 </div>
                             </div>
                             <div class="chart-card">
-                                <h3>Analyses par Jour</h3>
+                                <h3>Distribution des Longueurs</h3>
                                 <div class="chart-container">
-                                    <canvas id="timeChart"></canvas>
+                                    <canvas id="lengthDistributionChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -1340,20 +1304,6 @@
                             </div>
                         </div>
 
-                        <div class="details-grid">
-                            <div class="details-card">
-                                <h3>Câbles Non Défectueux - Détails</h3>
-                                <div class="cable-list" id="okList">
-                                    <p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>
-                                </div>
-                            </div>
-                            <div class="details-card">
-                                <h3>Câbles Défectueux - Détails</h3>
-                                <div class="cable-list" id="defectList">
-                                    <p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1370,8 +1320,8 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="history-grid" id="historyGrid">
-                            <p style="text-align: center; color: #95a5a6; padding: 50px;">Aucune analyse effectuée</p>
+                        <div id="historyTableContainer">
+                            <div class="no-data-history">Aucune analyse effectuée</div>
                         </div>
                     </div>
                 </div>
@@ -1627,7 +1577,6 @@
 
         // Global variables for charts
         let pieChart = null;
-        let timeChart = null;
         let allAnalyses = [];
 
         // Dashboard
@@ -1643,33 +1592,9 @@
                 animateCounter(document.getElementById('okPercentage'), data.pct_ok, '%');
                 animateCounter(document.getElementById('defectPercentage'), data.pct_defectueux, '%');
 
-                const okList = document.getElementById('okList');
-                if (data.ok.length > 0) {
-                    okList.innerHTML = data.ok.map(cable => `
-                        <div class="cable-item">
-                            <span class="cable-id-text">${cable.id}</span>
-                            <span class="cable-length">${cable.longueur_cm} cm</span>
-                        </div>
-                    `).join('');
-                } else {
-                    okList.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>';
-                }
-
-                const defectList = document.getElementById('defectList');
-                if (data.defectueux.length > 0) {
-                    defectList.innerHTML = data.defectueux.map(cable => `
-                        <div class="cable-item">
-                            <span class="cable-id-text">${cable.id}</span>
-                            <span class="cable-length">${cable.longueur_cm} cm</span>
-                        </div>
-                    `).join('');
-                } else {
-                    defectList.innerHTML = '<p style="text-align: center; color: #95a5a6; padding: 30px;">Aucune donnée</p>';
-                }
-
                 // Create charts
                 createPieChart(data.nb_ok, data.nb_defectueux);
-                createTimeChart(allAnalyses);
+                createLengthDistributionChart(allAnalyses);
             } catch (err) {
                 console.error('Erreur lors du chargement du dashboard:', err);
             }
@@ -1712,76 +1637,62 @@
             });
         }
 
-        // Create Time Chart
-        function createTimeChart(analyses) {
-            const ctx = document.getElementById('timeChart');
+        // Create Length Distribution Chart
+        let lengthDistributionChart = null;
 
-            if (timeChart) {
-                timeChart.destroy();
+        function createLengthDistributionChart(analyses) {
+            const ctx = document.getElementById('lengthDistributionChart');
+
+            if (lengthDistributionChart) {
+                lengthDistributionChart.destroy();
             }
 
-            // Group analyses by date
-            const dateGroups = {};
-            analyses.forEach(analysis => {
-                const date = analysis.id.split('_')[1]; // Extract YYYYMMDD from ID
-                const formattedDate = `${date.substring(6, 8)}/${date.substring(4, 6)}/${date.substring(0, 4)}`;
+            if (analyses.length === 0) {
+                return;
+            }
 
-                if (!dateGroups[formattedDate]) {
-                    dateGroups[formattedDate] = { ok: 0, defect: 0 };
-                }
+            // Créer des intervalles de longueur (bins)
+            const bins = [
+                { label: '< 15 cm', min: 0, max: 15, color: '#e74c3c' },
+                { label: '15-20 cm', min: 15, max: 20, color: '#f39c12' },
+                { label: '20-30 cm', min: 20, max: 30, color: '#2ecc71' },
+                { label: '30-40 cm', min: 30, max: 40, color: '#2ecc71' },
+                { label: '40-45 cm', min: 40, max: 45, color: '#f39c12' },
+                { label: '> 45 cm', min: 45, max: Infinity, color: '#e74c3c' }
+            ];
 
-                if (analysis.statut === 'OK') {
-                    dateGroups[formattedDate].ok++;
-                } else {
-                    dateGroups[formattedDate].defect++;
-                }
+            // Compter les câbles dans chaque intervalle
+            const counts = bins.map(bin => {
+                return analyses.filter(a => {
+                    const length = a.longueur_cm;
+                    return length >= bin.min && length < bin.max;
+                }).length;
             });
 
-            // Get last 7 days
-            const sortedDates = Object.keys(dateGroups).sort((a, b) => {
-                const [da, ma, ya] = a.split('/');
-                const [db, mb, yb] = b.split('/');
-                return new Date(yb, mb - 1, db) - new Date(ya, ma - 1, da);
-            }).slice(0, 7).reverse();
-
-            const okData = sortedDates.map(date => dateGroups[date].ok);
-            const defectData = sortedDates.map(date => dateGroups[date].defect);
-
-            timeChart = new Chart(ctx, {
-                type: 'line',
+            lengthDistributionChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: sortedDates,
-                    datasets: [
-                        {
-                            label: 'OK',
-                            data: okData,
-                            borderColor: '#27ae60',
-                            backgroundColor: 'rgba(39, 174, 96, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'DÉFECTUEUX',
-                            data: defectData,
-                            borderColor: '#e74c3c',
-                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }
-                    ]
+                    labels: bins.map(b => b.label),
+                    datasets: [{
+                        label: 'Nombre de câbles',
+                        data: counts,
+                        backgroundColor: bins.map(b => b.color),
+                        borderColor: bins.map(b => b.color),
+                        borderWidth: 2
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                },
-                                padding: 20
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' câble(s)';
+                                }
                             }
                         }
                     },
@@ -1790,6 +1701,16 @@
                             beginAtZero: true,
                             ticks: {
                                 stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Nombre de câbles'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Plage de longueur (cm)'
                             }
                         }
                     }
@@ -1850,7 +1771,7 @@
 
             // Update charts
             createPieChart(okFiltered.length, defectFiltered.length);
-            createTimeChart(filtered);
+            createLengthDistributionChart(filtered);
 
             showToast('Filtres appliqués!', 'success');
         }
@@ -2037,7 +1958,7 @@
         }
 
         function displayFilteredHistory(filterStatus) {
-            const historyGrid = document.getElementById('historyGrid');
+            const container = document.getElementById('historyTableContainer');
 
             // Filtrer les câbles selon le statut sélectionné
             let filteredCables = allCablesData;
@@ -2049,11 +1970,11 @@
                 const message = filterStatus === 'all'
                     ? 'Aucune analyse effectuée'
                     : `Aucun câble ${filterStatus === 'OK' ? 'non défectueux' : 'défectueux'} trouvé`;
-                historyGrid.innerHTML = `<p style="text-align: center; color: #95a5a6; padding: 50px;">${message}</p>`;
+                container.innerHTML = `<div class="no-data-history">${message}</div>`;
                 return;
             }
 
-            historyGrid.innerHTML = filteredCables.map(cable => {
+            const tableRows = filteredCables.map(cable => {
                 const date = new Date(cable.timestamp);
                 const formattedDate = date.toLocaleDateString('fr-FR');
                 const formattedTime = date.toLocaleTimeString('fr-FR');
@@ -2061,24 +1982,40 @@
                 const cableInfoJson = JSON.stringify(cable).replace(/"/g, '&quot;');
 
                 return `
-                    <div class="history-card">
-                        <div class="history-card-header">
-                            <span class="history-id">${cable.id}</span>
-                            <span class="history-date">${formattedDate} ${formattedTime}</span>
-                        </div>
-                        <img class="history-image"
-                             src="/static/${cable.result_image}"
-                             alt="${cable.id}"
-                             onerror="this.src='/static/placeholder.png'; this.style.opacity='0.3';"
-                             onclick="event.stopPropagation(); openImageModal('/static/${cable.result_image}', ${cableInfoJson});"
-                             style="cursor: zoom-in;">
-                        <div class="history-info">
-                            <span class="history-length">${cable.longueur_cm} cm</span>
-                            <span class="history-status ${statusClass}">${cable.statut}</span>
-                        </div>
-                    </div>
+                    <tr>
+                        <td><span class="history-id">${cable.id}</span></td>
+                        <td><span class="history-date">${formattedDate}</span></td>
+                        <td><span class="history-date">${formattedTime}</span></td>
+                        <td><span class="history-length">${cable.longueur_cm} cm</span></td>
+                        <td><span class="history-status ${statusClass}">${cable.statut}</span></td>
+                        <td>
+                            <button class="btn-view-photo" onclick="openImageModal('/static/${cable.result_image}', ${cableInfoJson})">
+                                Voir Photo
+                            </button>
+                        </td>
+                    </tr>
                 `;
             }).join('');
+
+            container.innerHTML = `
+                <div class="history-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Heure</th>
+                                <th>Longueur</th>
+                                <th>Statut</th>
+                                <th>Photo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         // Écouter les changements du filtre
