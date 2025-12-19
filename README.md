@@ -1,4 +1,5 @@
 # Détection de Défauts de Câbles
+Application web de détection automatique de défauts de longueur des câbles électriques en utilisant YOLOv8 et Flask.
 
 ## Aperçu
 
@@ -12,7 +13,7 @@
 
 <img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/f435ea0a-b996-4e3d-a393-76223716e420" />
 
-Application web de détection automatique de défauts de longueur des câbles électriques en utilisant YOLOv8 et Flask.
+
 
 ## Description
 
